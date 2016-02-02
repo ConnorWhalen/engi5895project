@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Scanner;
 
 public class ClientPrototype {
@@ -12,11 +13,13 @@ public class ClientPrototype {
 	private DataOutputStream out;
     private DataInputStream in;
 	private Scanner reader;
+	boolean connected;
 	
 	public ClientPrototype(){
 		try{
 			socket = new Socket("localhost", 1234);
 			System.out.println("client connected successfully");
+			connected = true;
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -31,7 +34,7 @@ public class ClientPrototype {
 			
 			Thread inputThread = new Thread(new Runnable(){
 				public void run(){
-				    while (true){
+				    while (connected){
 				        readInput();
 				        try{
 				            Thread.sleep(50);
@@ -44,7 +47,7 @@ public class ClientPrototype {
 			
 			Thread outputThread = new Thread(new Runnable(){
 				public void run(){
-                    while (true){
+                    while (connected){
                         writeOutput();
                         try{
                             Thread.sleep(50);
@@ -56,7 +59,7 @@ public class ClientPrototype {
 			});
 			inputThread.start();
 			outputThread.start();
-			System.out.println("You can now send and receive text from the server");
+			System.out.println("You can now send and receive text from the server. Send q to shut down.");
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -66,7 +69,12 @@ public class ClientPrototype {
 	public void readInput(){
 		try {
             String i = in.readUTF();
-			System.out.println("SERVER: " + i);
+            if (i.equals("q")){
+                shutdown();
+            }
+            else{
+                System.out.println("SERVER: " + i);
+            }
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -75,13 +83,27 @@ public class ClientPrototype {
 	public void writeOutput(){
 		try {
 		    if (reader.hasNext()){
-		        out.writeUTF(reader.next());
-			    out.flush();
+                String next = reader.next();
+                out.writeUTF(next);
+                out.flush();
+                if (next.equals("q")){
+                    shutdown();
+                }
 		    }
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+    
+    private void shutdown(){
+        try{
+            connected = false;
+            System.out.println("Shutting Down");
+            socket.close();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
 
 	public static void main(String[] args) {
 		ClientPrototype c = new ClientPrototype();
