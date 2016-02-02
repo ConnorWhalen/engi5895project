@@ -2,10 +2,7 @@ package comms;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -13,7 +10,8 @@ public class ClientPrototype {
 	
 	private Socket socket;
 	private DataOutputStream out;
-	private DataInputStream in;
+    private DataInputStream in;
+	private Scanner reader;
 	
 	public ClientPrototype(){
 		try{
@@ -29,16 +27,31 @@ public class ClientPrototype {
 		try{
 			out = new DataOutputStream(socket.getOutputStream());
 			in = new DataInputStream(socket.getInputStream());
+            reader = new Scanner(System.in);
 			
 			Thread inputThread = new Thread(new Runnable(){
 				public void run(){
-					readInput();
+				    while (true){
+				        readInput();
+				        try{
+				            Thread.sleep(50);
+				        } catch (InterruptedException e){
+				            e.printStackTrace();
+				        }
+				    }
 				}
 			});
 			
 			Thread outputThread = new Thread(new Runnable(){
 				public void run(){
-					writeOutput();
+                    while (true){
+                        writeOutput();
+                        try{
+                            Thread.sleep(50);
+                        } catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
 				}
 			});
 			inputThread.start();
@@ -52,16 +65,8 @@ public class ClientPrototype {
 	
 	public void readInput(){
 		try {
-			boolean eof = false;
-			while (!eof) {
-				try {
-					String i = in.readUTF();
-					System.out.println("SERVER: " + i);
-				} catch (EOFException e) {
-					eof = true;
-				}
-			}
-			System.out.println("Read all data from the pipe");
+            String i = in.readUTF();
+			System.out.println("SERVER: " + i);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -69,10 +74,10 @@ public class ClientPrototype {
 	
 	public void writeOutput(){
 		try {
-			Scanner scan = new Scanner(System.in);
-			out.writeUTF(scan.next());
-			out.flush();
-			System.out.println("Sent all data to the pipe");
+		    if (reader.hasNext()){
+		        out.writeUTF(reader.next());
+			    out.flush();
+		    }
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
