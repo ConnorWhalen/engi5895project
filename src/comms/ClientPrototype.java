@@ -4,22 +4,25 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.Scanner;
 
+/* **************************************************************
+ * Prototype for client/server communication.
+ * On creation attempts to connect to a server.
+ * Takes console input and sends it to the server.
+ * Receives and prints input sent from the server to the console.
+ */
 public class ClientPrototype {
 	
 	private Socket socket;
 	private DataOutputStream out;
     private DataInputStream in;
 	private Scanner reader;
-	boolean connected;
 	
 	public ClientPrototype(){
 		try{
 			socket = new Socket("localhost", 1234);
 			System.out.println("client connected successfully");
-			connected = true;
 		}
 		catch (IOException e){
 			e.printStackTrace();
@@ -34,7 +37,7 @@ public class ClientPrototype {
 			
 			Thread inputThread = new Thread(new Runnable(){
 				public void run(){
-				    while (connected){
+				    while (!socket.isClosed()){
 				        readInput();
 				        try{
 				            Thread.sleep(50);
@@ -47,7 +50,7 @@ public class ClientPrototype {
 			
 			Thread outputThread = new Thread(new Runnable(){
 				public void run(){
-                    while (connected){
+                    while (!socket.isClosed()){
                         writeOutput();
                         try{
                             Thread.sleep(50);
@@ -97,7 +100,6 @@ public class ClientPrototype {
     
     private void shutdown(){
         try{
-            connected = false;
             System.out.println("Shutting Down");
             socket.close();
         } catch (IOException e){

@@ -8,6 +8,12 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
+/* **************************************************************
+ * Prototype for client/server communication.
+ * On creation attempts to connect to a client.
+ * Takes console input and sends it to the client.
+ * Receives and prints input sent from the client to the console.
+ */
 public class ServerPrototype {
 	
 	private ServerSocket serverSocket;
@@ -15,7 +21,6 @@ public class ServerPrototype {
 	private DataOutputStream out;
 	private DataInputStream in;
     private Scanner reader;
-    boolean connected;
 	
 	public ServerPrototype(){
 		try{
@@ -27,7 +32,6 @@ public class ServerPrototype {
 				try{
 					socket = serverSocket.accept();
 					System.out.println("server connected successfully");
-					connected = true;
 					attempting = false;
 				}
 				catch (SocketTimeoutException e){
@@ -53,7 +57,7 @@ public class ServerPrototype {
 			
 			Thread inputThread = new Thread(new Runnable(){
 				public void run(){
-                    while (connected){
+                    while (!socket.isClosed()){
                         readInput();
                         try{
                             Thread.sleep(50);
@@ -66,7 +70,7 @@ public class ServerPrototype {
 			
 			Thread outputThread = new Thread(new Runnable(){
 				public void run(){
-                    while (connected){
+                    while (!socket.isClosed()){
                         writeOutput();
                         try{
                             Thread.sleep(50);
@@ -116,7 +120,6 @@ public class ServerPrototype {
 	
 	private void shutdown(){
 	    try{
-    	    connected = false;
             System.out.println("Shutting Down");
             socket.close();
             serverSocket.close();
